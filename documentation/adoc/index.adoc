@@ -1,20 +1,9 @@
-@mainpage
+= SmartDESC Documentation
+Jonathan Coulombe <jonathan.coulombe@polymtl.ca>
+:toc: left
 
-Index
-=====
 
-@ref page_overview
+:leveloffset: 1
 
-@ref page_get_started
+<<overview.adoc>>
 
-@ref page_install
-
-@ref page_user_tutorial
-
-@ref page_tech_info
-
-@ref page_dev_tutorial
-
-@ref page_demo
-
-@ref page_faq

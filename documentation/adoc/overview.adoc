@@ -1,8 +1,6 @@
-@page page_overview Overview
+= Overview
 
-Introduction
-============
-
+== Introduction
 
 The SmartDESC simulator framework is primarily intended to be used as a tool for simulating large energy systems on distributed computer networks. Although implemented in this context, it is designed for maximum flexibility, and almost any "black box" could be modelled in it.
 
@@ -15,12 +13,9 @@ Developers should also, as well as users, be familiar with XML technologies: cre
 Any UNIX based system (Linux, Mac OS X) with a Java Virtual Machine (version 1.7 or higher) should be able to run the software.
 
 
-Fundamental concepts
-====================
+== Fundamental concepts
 
-
-Structure
----------
+=== Structure
 
 Simulations are performed on a network of elements arranged in a tree structure. However, its structure is _not_ representative of any physical or data flow hierarchy associated with the real simulated network. Any kind of physical network can be represented by this tree. The actual interactions between elements are solely defined by the implementation of the modules and their configuration when used.
 
@@ -35,18 +30,17 @@ Each module includes a _component_, which is an instance dynamically loaded acco
 [^containers vs clock domain]: Although this is true in the current implementation, the concept is evolving towards a _clock domain_ based segmentation between hosts, and the formal notion of _containers_ will probably become restricted to the Jade underlying layer in a future release. So take this information with a grain of salt.
 
 
-Execution
----------
+=== Execution
 
 The simulation execution is separated into steps labeled as goals. You reach a goal by going through phases, each of which can be a goal in itself. There are four distinct phases, each depending on the previous one in the following list:
 
-1.	__configure__ --- The configuration phase is where everything is set by the user according to his needs and intent. The structure, parameters and conditions of the simulated network are defined, as well as the options related to _where_ and _how_ the simulation should be done. It is the only truly interactive phase of the process.
+1.	__configure__ -- The configuration phase is where everything is set by the user according to his needs and intent. The structure, parameters and conditions of the simulated network are defined, as well as the options related to _where_ and _how_ the simulation should be done. It is the only truly interactive phase of the process.
 
-2.	__generate__ --- The second phase is the generation, an automatic sequence of actions based on the configuration data defined in the first phase. It consists mainly of interpreting, formatting and expanding the network data.
+2.	__generate__ -- The second phase is the generation, an automatic sequence of actions based on the configuration data defined in the first phase. It consists mainly of interpreting, formatting and expanding the network data.
 
-3.	__simulate__ --- The actual simulation is performed during this phase. Compiled data resulting from the previous is segmented and dispatched to appropriate hosts, then run in parallel. As required by the Jade framework, containers are first created on every host, which in turn create and configure all agents representing modules to be simulated. Agents are initialized according to the supplied configuration data and existing prior simulation results, if any, then the simulation takes place using discrete time steps.
+3.	__simulate__ -- The actual simulation is performed during this phase. Compiled data resulting from the previous is segmented and dispatched to appropriate hosts, then run in parallel. As required by the Jade framework, containers are first created on every host, which in turn create and configure all agents representing modules to be simulated. Agents are initialized according to the supplied configuration data and existing prior simulation results, if any, then the simulation takes place using discrete time steps.
 
-4.	__report__ --- The report phase retrieves data from remote hosts and executes any user defined action for collecting, formatting and presenting data.
+4.	__report__ -- The report phase retrieves data from remote hosts and executes any user defined action for collecting, formatting and presenting data.
 
 Reaching a goal is the same as performing the phase with the same name. However, it implies that all previous phases are completed before the one corresponding to the goal is performed.
 
@@ -62,8 +56,7 @@ is equivalent to writing the following commands successively (in the case where 
 	smartDesc report
 
 
-Persistence
------------
+=== Persistence
 
 Each phase terminates with an output written to disc. If the output of _phase1_ required by _phase2_ already exists, it will be used directly and _phase1_ will not be performed again. 
 
@@ -76,19 +69,17 @@ The concept of persistence for reusability also applies for components that are 
 Running a simulation from scratch, then changing the configuration for a controller might require to perform the `gen` phase and some initialization before the next simulation. However, only outputs that are directly affected by this specific parameter change should be modified. Other instances (aggregators/EWHs/draw-events/...) that have already been generated and initialized should remain untouched, so that the effect of the controller configuration change can be clearly evaluated.
 
 
-Phases
-======
+== Phases
 
-Configuration
--------------
+=== Configuration
 
 **Warning**: The following applies to how things are implemented now, but there are significant changes coming in the pipeline. Don't be surprised if you need to change all of your configuration files at some point in the future.
 
 The simulated network is represented as a tree of freely named nodes that comply with the following two constraints:
 
--	the simulation tree has a single root element named `sim`;
+- the simulation tree has a single root element named `sim`;
 
--	every node of the network has an element named `cfg` that specifies at least its implementing class through a variable named `class`.
+- every node of the network has an element named `cfg` that specifies at least its implementing class through a variable named `class`.
 
 Actually, the `sim` is a subtree of the root element `configuration` which can include one or several subtrees for any complementary data.
 
@@ -142,57 +133,48 @@ Subtrees of any size can be inserted as a child of any element in the configurat
 
 
 
-Generation
-----------
-
+=== Generation
 
 An automatic sequence of actions based on the configuration file that includes:
 
--	Formatting and validating configuration data;
+- Formatting and validating configuration data;
 
--	Injecting default values to complete each component configuration;
+- Injecting default values to complete each component configuration;
 
--	Duplicating modules and generating unique IDs;
+- Duplicating modules and generating unique IDs;
 
--	node links
+- node links
 
--	Evaluating expressions and performing value substitution;
+- Evaluating expressions and performing value substitution;
 
--	Validating data types and values for each component;
+- Validating data types and values for each component;
 
--	Config ID
-
-
-Simulation
-----------
+- Config ID
 
 
--	formatting and validating generated data;
+=== Simulation
 
--	Dispatching to remote hosts;
+- formatting and validating generated data;
 
--	Initializing simulation workspace;
+- Dispatching to remote hosts;
 
--	Create containers and main controller;
+- Initializing simulation workspace;
 
--	Create agents;
+- Create containers and main controller;
 
--	Initialize state;
+- Create agents;
 
--	Run agents in parallel.
+- Initialize state;
 
-
-
-Report
-------
+- Run agents in parallel.
 
 
--	Retrieve data from remote hosts;
+=== Report
 
--	Execute user defined actions (collecting/formatting data).
+- Retrieve data from remote hosts;
+
+- Execute user defined actions (collecting/formatting data).
 
 To be done...
 
 
-
-[Back to Index](index.html) / [Before You Start](page_get_started.html)

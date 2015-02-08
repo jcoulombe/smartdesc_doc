@@ -5,5 +5,5 @@ Jonathan Coulombe <jonathan.coulombe@polymtl.ca>
 
 :leveloffset: 1
 
-<<overview.adoc>>
+link:overview.adoc[Overview]
 

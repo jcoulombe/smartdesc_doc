@@ -1,4 +1,10 @@
 = Overview
+Jonathan Coulombe <jonathan.coulombe@polymtl.ca>
+:icons: font
+:toc:
+:toc-placement!:
+
+toc::[]
 
 == Introduction
 
@@ -19,7 +25,7 @@ Any UNIX based system (Linux, Mac OS X) with a Java Virtual Machine (version 1.7
 
 Simulations are performed on a network of elements arranged in a tree structure. However, its structure is _not_ representative of any physical or data flow hierarchy associated with the real simulated network. Any kind of physical network can be represented by this tree. The actual interactions between elements are solely defined by the implementation of the modules and their configuration when used.
 
-There are fundamentally two types of elements: containers and modules. The latter type is the one that models physical elements and performs most actual operations. These define _what_ the simulator does, while containers mostly define _where_ modules are run when simulations are performed by parallel computers. Every host has a container as its root element.[^containers vs clock domain]
+There are fundamentally two types of elements: containers and modules. The latter type is the one that models physical elements and performs most actual operations. These define _what_ the simulator does, while containers mostly define _where_ modules are run when simulations are performed by parallel computers. Every host has a container as its root element.footnote:[Although this is true in the current implementation, the concept is evolving towards a _clock domain_ based segmentation between hosts, and the formal notion of _containers_ will probably become restricted to the Jade underlying layer in a future release. So take this information with a grain of salt.]
 
 These concepts are closely related to containers and agents in Jade terminology, but in the SmartDESC simulator, all elements are in fact agents. SmartDESC containers are, as those defined in the Jade platform, entities in which agent modules run, but they are also instances of agents themselves. During the simulation process, they have parallel behaviours and provide services to all of their contained modules.
 
@@ -27,20 +33,19 @@ SmartDESC agents are the basic units of the framework and provide most functiona
 
 Each module includes a _component_, which is an instance dynamically loaded according to the user configuration, and providing its exclusive functionality. The role of the developer is to define these components and provide complementary resource files defining defaults, constraints, etc. Any specific implementation of a particular model is a class extending the core basic `SDComponent` class.
 
-[^containers vs clock domain]: Although this is true in the current implementation, the concept is evolving towards a _clock domain_ based segmentation between hosts, and the formal notion of _containers_ will probably become restricted to the Jade underlying layer in a future release. So take this information with a grain of salt.
 
 
 === Execution
 
 The simulation execution is separated into steps labeled as goals. You reach a goal by going through phases, each of which can be a goal in itself. There are four distinct phases, each depending on the previous one in the following list:
 
-1.	__configure__ -- The configuration phase is where everything is set by the user according to his needs and intent. The structure, parameters and conditions of the simulated network are defined, as well as the options related to _where_ and _how_ the simulation should be done. It is the only truly interactive phase of the process.
+. *configure* -- The configuration phase is where everything is set by the user according to his needs and intent. The structure, parameters and conditions of the simulated network are defined, as well as the options related to _where_ and _how_ the simulation should be done. It is the only truly interactive phase of the process.
 
-2.	__generate__ -- The second phase is the generation, an automatic sequence of actions based on the configuration data defined in the first phase. It consists mainly of interpreting, formatting and expanding the network data.
+. *generate* -- The second phase is the generation, an automatic sequence of actions based on the configuration data defined in the first phase. It consists mainly of interpreting, formatting and expanding the network data.
 
-3.	__simulate__ -- The actual simulation is performed during this phase. Compiled data resulting from the previous is segmented and dispatched to appropriate hosts, then run in parallel. As required by the Jade framework, containers are first created on every host, which in turn create and configure all agents representing modules to be simulated. Agents are initialized according to the supplied configuration data and existing prior simulation results, if any, then the simulation takes place using discrete time steps.
+. *simulate* -- The actual simulation is performed during this phase. Compiled data resulting from the previous is segmented and dispatched to appropriate hosts, then run in parallel. As required by the Jade framework, containers are first created on every host, which in turn create and configure all agents representing modules to be simulated. Agents are initialized according to the supplied configuration data and existing prior simulation results, if any, then the simulation takes place using discrete time steps.
 
-4.	__report__ -- The report phase retrieves data from remote hosts and executes any user defined action for collecting, formatting and presenting data.
+. *report* -- The report phase retrieves data from remote hosts and executes any user defined action for collecting, formatting and presenting data.
 
 Reaching a goal is the same as performing the phase with the same name. However, it implies that all previous phases are completed before the one corresponding to the goal is performed.
 
@@ -73,7 +78,7 @@ Running a simulation from scratch, then changing the configuration for a control
 
 === Configuration
 
-**Warning**: The following applies to how things are implemented now, but there are significant changes coming in the pipeline. Don't be surprised if you need to change all of your configuration files at some point in the future.
+NOTE: The following applies to how things are implemented now, but there are significant changes coming in the pipeline. Don't be surprised if you need to change all of your configuration files at some point in the future.
 
 The simulated network is represented as a tree of freely named nodes that comply with the following two constraints:
 
@@ -85,6 +90,8 @@ Actually, the `sim` is a subtree of the root element `configuration` which can i
 
 For example, the following (simplified XML) listing represents a valid configuration file defining some global `setup` data, as well as a network where two modules named `aModule` are contained within the root, and are implemented by the `MyModule` class.
 
+[source,indent=0]
+----
 	/configuration
 		/setup
 			/log = DEBUG
@@ -97,7 +104,7 @@ For example, the following (simplified XML) listing represents a valid configura
 			/aModule
 				/cfg
 					/class = ca.smartdesc.sim.MyModule
-
+----
 
 Setup and module configuration data can include preferences (workspace folder, log file), simulation context (hosts, databases, timing), constants, parameters, initial values, etc.
 
@@ -110,6 +117,8 @@ Values can be defined through commands or by loading XML files containing all or
 
 assuming that the (actual) content of the file `network.xml` is:
 
+[source,xml,indent=0]
+----
 	<?xml version="1.0" encoding="UTF-8" ?>
 	<configuration>
 		<sim>
@@ -128,6 +137,7 @@ assuming that the (actual) content of the file `network.xml` is:
 			</aModule>
 		</sim>
 	</configuration>
+----
 
 Subtrees of any size can be inserted as a child of any element in the configuration tree, making it easy to combine existing networks or adding predefined complex components from libraries.
 

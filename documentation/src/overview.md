@@ -1,0 +1,198 @@
+@page page_overview Overview
+
+Introduction
+============
+
+
+The SmartDESC simulator framework is primarily intended to be used as a tool for simulating large energy systems on distributed computer networks. Although implemented in this context, it is designed for maximum flexibility, and almost any "black box" could be modelled in it.
+
+It is based on the Jade agent oriented programming framework which provides a versatile platform for parallel computing. Although being familiar with the Jade framework might be useful in some specific cases, the SmartDESC framework tries to hide most details of parallel agent programming. It provides a layer of abstraction facilitating the design of custom models and provides base classes, conventions and guidelines for their development. It also provides an interface for the user and the environment in which components can run in a coherent manner.
+
+Developers who want to contribute to the simulator should be familiar with Java, which is the language of choice because of the underlying framework used. Even though modules can be developed in any language, at least the interface with the framework needs to be written in Java.
+
+Developers should also, as well as users, be familiar with XML technologies: creating XML files, XML Schema and using XPath. Most of these are mandatory for defining a module as well as for configuring it.
+
+Any UNIX based system (Linux, Mac OS X) with a Java Virtual Machine (version 1.7 or higher) should be able to run the software.
+
+
+Fundamental concepts
+====================
+
+
+Structure
+---------
+
+Simulations are performed on a network of elements arranged in a tree structure. However, its structure is _not_ representative of any physical or data flow hierarchy associated with the real simulated network. Any kind of physical network can be represented by this tree. The actual interactions between elements are solely defined by the implementation of the modules and their configuration when used.
+
+There are fundamentally two types of elements: containers and modules. The latter type is the one that models physical elements and performs most actual operations. These define _what_ the simulator does, while containers mostly define _where_ modules are run when simulations are performed by parallel computers. Every host has a container as its root element.[^containers vs clock domain]
+
+These concepts are closely related to containers and agents in Jade terminology, but in the SmartDESC simulator, all elements are in fact agents. SmartDESC containers are, as those defined in the Jade platform, entities in which agent modules run, but they are also instances of agents themselves. During the simulation process, they have parallel behaviours and provide services to all of their contained modules.
+
+SmartDESC agents are the basic units of the framework and provide most functionality required for the communication between modules, timing, configuring and manipulating data, etc. They are identical for any purpose. Hence, most of what happens during the whole simulation process is invisible for the user or developer taking advantage of the framework.
+
+Each module includes a _component_, which is an instance dynamically loaded according to the user configuration, and providing its exclusive functionality. The role of the developer is to define these components and provide complementary resource files defining defaults, constraints, etc. Any specific implementation of a particular model is a class extending the core basic `SDComponent` class.
+
+[^containers vs clock domain]: Although this is true in the current implementation, the concept is evolving towards a _clock domain_ based segmentation between hosts, and the formal notion of _containers_ will probably become restricted to the Jade underlying layer in a future release. So take this information with a grain of salt.
+
+
+Execution
+---------
+
+The simulation execution is separated into steps labeled as goals. You reach a goal by going through phases, each of which can be a goal in itself. There are four distinct phases, each depending on the previous one in the following list:
+
+1.	__configure__ --- The configuration phase is where everything is set by the user according to his needs and intent. The structure, parameters and conditions of the simulated network are defined, as well as the options related to _where_ and _how_ the simulation should be done. It is the only truly interactive phase of the process.
+
+2.	__generate__ --- The second phase is the generation, an automatic sequence of actions based on the configuration data defined in the first phase. It consists mainly of interpreting, formatting and expanding the network data.
+
+3.	__simulate__ --- The actual simulation is performed during this phase. Compiled data resulting from the previous is segmented and dispatched to appropriate hosts, then run in parallel. As required by the Jade framework, containers are first created on every host, which in turn create and configure all agents representing modules to be simulated. Agents are initialized according to the supplied configuration data and existing prior simulation results, if any, then the simulation takes place using discrete time steps.
+
+4.	__report__ --- The report phase retrieves data from remote hosts and executes any user defined action for collecting, formatting and presenting data.
+
+Reaching a goal is the same as performing the phase with the same name. However, it implies that all previous phases are completed before the one corresponding to the goal is performed.
+
+In other words, writing the command:
+
+	smartDesc report
+	
+is equivalent to writing the following commands successively (in the case where no additional arguments are required):
+
+	smartDesc configure
+	smartDesc generate
+	smartDesc simulate
+	smartDesc report
+
+
+Persistence
+-----------
+
+Each phase terminates with an output written to disc. If the output of _phase1_ required by _phase2_ already exists, it will be used directly and _phase1_ will not be performed again. 
+
+This is obviously intended to improve performance for repetitive runs but, most importantly, the output of any phase can be used as a well defined starting point for future simulations. A simulation can be cloned and reused in any of its states. Two successive runs of a phase will hence be executed from the exact same starting point when its required input has not changed explicitly, and can be compared on the basis of exclusively what has changed.
+
+For instance, running a simulation from scratch will go through all phases. Some phases might involve probabilistic generation of data and/or parameters. Running the simulation again with a different time step should not involve re-generating the network and reinitializing all instances, so that the two simulations are exactly identical apart from their time step and can be compared on that base.
+
+The concept of persistence for reusability also applies for components that are _part of_ a phase. A phase should be executed only on the elements that absolutely need to be updated.
+
+Running a simulation from scratch, then changing the configuration for a controller might require to perform the `gen` phase and some initialization before the next simulation. However, only outputs that are directly affected by this specific parameter change should be modified. Other instances (aggregators/EWHs/draw-events/...) that have already been generated and initialized should remain untouched, so that the effect of the controller configuration change can be clearly evaluated.
+
+
+Phases
+======
+
+Configuration
+-------------
+
+**Warning**: The following applies to how things are implemented now, but there are significant changes coming in the pipeline. Don't be surprised if you need to change all of your configuration files at some point in the future.
+
+The simulated network is represented as a tree of freely named nodes that comply with the following two constraints:
+
+-	the simulation tree has a single root element named `sim`;
+
+-	every node of the network has an element named `cfg` that specifies at least its implementing class through a variable named `class`.
+
+Actually, the `sim` is a subtree of the root element `configuration` which can include one or several subtrees for any complementary data.
+
+For example, the following (simplified XML) listing represents a valid configuration file defining some global `setup` data, as well as a network where two modules named `aModule` are contained within the root, and are implemented by the `MyModule` class.
+
+	/configuration
+		/setup
+			/log = DEBUG
+		/sim
+			/cfg
+				/class = ca.smartdesc.sim.RootContainer
+			/aModule
+				/cfg
+					/class = ca.smartdesc.sim.MyModule
+			/aModule
+				/cfg
+					/class = ca.smartdesc.sim.MyModule
+
+
+Setup and module configuration data can include preferences (workspace folder, log file), simulation context (hosts, databases, timing), constants, parameters, initial values, etc.
+
+
+Values can be defined through commands or by loading XML files containing all or a subset of the desired configuration. The configuration of the previous example could be set by the following sequence of commands:
+
+	$> smartdesc configure /setup/log DEBUG
+	$> smartdesc configure / network.xml
+
+
+assuming that the (actual) content of the file `network.xml` is:
+
+	<?xml version="1.0" encoding="UTF-8" ?>
+	<configuration>
+		<sim>
+			<cfg>
+				<class>ca.smartdesc.sim.RootContainer</class>
+			</cfg>
+			<aModule>
+				<cfg>
+					<class>ca.smartdesc.sim.MyModule</class>
+				</cfg>
+			</aModule>
+			<aModule>
+				<cfg>
+					<class>ca.smartdesc.sim.MyModule</class>
+				</cfg>
+			</aModule>
+		</sim>
+	</configuration>
+
+Subtrees of any size can be inserted as a child of any element in the configuration tree, making it easy to combine existing networks or adding predefined complex components from libraries.
+
+
+
+Generation
+----------
+
+
+An automatic sequence of actions based on the configuration file that includes:
+
+-	Formatting and validating configuration data;
+
+-	Injecting default values to complete each component configuration;
+
+-	Duplicating modules and generating unique IDs;
+
+-	node links
+
+-	Evaluating expressions and performing value substitution;
+
+-	Validating data types and values for each component;
+
+-	Config ID
+
+
+Simulation
+----------
+
+
+-	formatting and validating generated data;
+
+-	Dispatching to remote hosts;
+
+-	Initializing simulation workspace;
+
+-	Create containers and main controller;
+
+-	Create agents;
+
+-	Initialize state;
+
+-	Run agents in parallel.
+
+
+
+Report
+------
+
+
+-	Retrieve data from remote hosts;
+
+-	Execute user defined actions (collecting/formatting data).
+
+To be done...
+
+
+
+[Back to Index](index.html) / [Before You Start](page_get_started.html)

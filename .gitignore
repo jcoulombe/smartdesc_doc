@@ -1,0 +1,38 @@
+#############################################################################
+#
+# We ignore everything except specific files/folders that are mandatory for
+# the project. 
+#
+# This makes sure that user specific preferences will be discarded, whatever
+# IDE, etc. is used, as well as automatically generated files such as target 
+# classes, javadoc, etc. that can easily be generated locally. Also, if 
+# unwanted files end up in the project root (might easily happen if a 
+# developer does not use a proper path relative to the classpath or workspace
+# while testing), they will also be ignored, keeping the shared project clean.
+#
+#############################################################################
+
+# ignore everything
+
+/*
+
+# Keep the source, and project definition/settings
+
+!/src
+!/pom.xml
+!/.gitignore
+!/README.md
+!/LICENSE.md
+
+# Keep documentation source, but not the compiled output if using doxygen.
+
+!/documentation
+/documentation/doxygen/
+/documentation/html/
+
+# ignore other meta/backup files everywhere, even in tracked folders
+
+.DS_Store
+*/.DS_Store
+*~
+
